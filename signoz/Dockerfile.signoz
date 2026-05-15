@@ -18,3 +18,4 @@ RUN chmod +x /usr/local/bin/railway-signoz-entrypoint.sh
 EXPOSE 8080 8085 4320
 
 ENTRYPOINT ["/usr/local/bin/railway-signoz-entrypoint.sh"]
+CMD ["server"]
