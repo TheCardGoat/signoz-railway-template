@@ -34,19 +34,36 @@ The Railway template automatically sets up these services with the necessary env
 
 To run the SigNoz stack on Railway, ensure the following:
 
+#### Service Dockerfiles
+- `signoz`: `signoz/Dockerfile.signoz`
+- `signoz-otel-collector`: `signoz/Dockerfile.otel`
+- `signoz-telemetrystore-migrator`: `signoz/Dockerfile.migrator`
+- `clickhouse`: `clickhouse/Dockerfile.clickhouse`
+
 #### OpenTelemetry Ingestion
 - You may need to configure **Domains / Proxy** settings in Railway for the `signoz-otel-collector` service, depending on your use case.  
 - Port **4317** is open for ingestion by default.
 
 #### SigNoz UI
 - A public domain is configured automatically in Railway to access the SigNoz dashboard.
+- SigNoz listens on port **8080** and Railway probes `/api/v1/health`. Keep the `signoz` service variable `PORT=8080` when possible. The Dockerfile also includes a small forwarder so deployments still answer Railway healthchecks if Railway injects a different `PORT`.
+- Set `SIGNOZ_TOKENIZER_JWT_SECRET` on the `signoz` service with a generated secret, for example `${{ secret(32) }}` in the Railway template editor.
 
-#### Schema-Migration Order  
-ClickHouse migrations run in the dedicated **`signoz-schema-migrator`** job. As the Railway does not yet offer Docker-style `depends_on`, dependent services can occasionally start before migrations finish and fail on their first boot.  
-If that happens, **redeploy these services after the migrator job completes**, in the exact order shown:
+#### Schema-Migration Order
+ClickHouse migrations run in the dedicated **`signoz-telemetrystore-migrator`** job. This template builds that job from `signoz/Dockerfile.migrator`, which uses the current SigNoz otel-collector migration command:
 
-1. **signoz-async-schema-migrator**  
-2. **signoz** (main application)  
+```sh
+/signoz-otel-collector migrate bootstrap &&
+/signoz-otel-collector migrate sync up &&
+/signoz-otel-collector migrate async up
+```
+
+Do not deploy the legacy `signoz/signoz-schema-migrator` image with ClickHouse `25.5.6`; it can fail during startup with `NO_SUCH_COLUMN_IN_TABLE` for `timestamp`.
+
+As Railway does not yet offer Docker-style `depends_on`, dependent services can occasionally start before migrations finish and fail on their first boot. If that happens, **redeploy these services after the migrator job completes**, in the exact order shown:
+
+1. **signoz-telemetrystore-migrator**
+2. **signoz** (main application)
 3. **signoz-otel-collector**
 
 After redeploying in this sequence, all components will connect to ClickHouse with the correct schema and operate normally.

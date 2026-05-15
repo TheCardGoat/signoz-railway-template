@@ -1,4 +1,5 @@
-FROM clickhouse/clickhouse-server:25.5.6
+ARG CLICKHOUSE_VERSION=25.5.6
+FROM clickhouse/clickhouse-server:${CLICKHOUSE_VERSION}
 
 COPY configs/config.xml /etc/clickhouse-server/config.xml
 COPY configs/users.xml /etc/clickhouse-server/users.xml

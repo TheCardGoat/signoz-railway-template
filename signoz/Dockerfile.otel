@@ -1,4 +1,20 @@
-FROM signoz/signoz-otel-collector:latest
+ARG OTELCOL_TAG=v0.144.4
+FROM signoz/signoz-otel-collector:${OTELCOL_TAG}
+
+ENV OTEL_RESOURCE_ATTRIBUTES=host.name=signoz-host,os.type=linux \
+    LOW_CARDINAL_EXCEPTION_GROUPING=false \
+    SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_DSN=tcp://clickhouse:9000 \
+    SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_CLUSTER=cluster \
+    SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_REPLICATION=true \
+    SIGNOZ_OTEL_COLLECTOR_TIMEOUT=10m
 
 COPY ./otel-collector-config.yaml /etc/otel-collector-config.yaml
 COPY signoz/otel-collector-opamp-config.yaml /etc/manager-config.yaml
+COPY ./otel-entrypoint.sh /usr/local/bin/otel-entrypoint.sh
+
+RUN chmod +x /usr/local/bin/otel-entrypoint.sh
+
+EXPOSE 4317 4318 13133
+
+ENTRYPOINT ["/usr/local/bin/otel-entrypoint.sh"]
+CMD ["/signoz-otel-collector migrate sync check && exec /signoz-otel-collector --config=/etc/otel-collector-config.yaml --manager-config=/etc/manager-config.yaml --copy-path=/var/tmp/collector-config.yaml"]
