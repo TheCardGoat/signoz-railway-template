@@ -1,4 +1,20 @@
-FROM signoz/signoz:latest
+ARG SIGNOZ_VERSION=v0.124.0
+FROM signoz/signoz:${SIGNOZ_VERSION}
+
+ENV SIGNOZ_ALERTMANAGER_PROVIDER=signoz \
+    PORT=8080 \
+    SIGNOZ_TELEMETRYSTORE_PROVIDER=clickhouse \
+    SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN=tcp://clickhouse:9000 \
+    SIGNOZ_SQLSTORE_SQLITE_PATH=/var/lib/signoz/signoz.db
+
+RUN apk add --no-cache socat
 
 COPY signoz/prometheus.yml /root/config/prometheus.yml
 COPY dashboards /root/config/dashboards
+COPY ./railway-signoz-entrypoint.sh /usr/local/bin/railway-signoz-entrypoint.sh
+
+RUN chmod +x /usr/local/bin/railway-signoz-entrypoint.sh
+
+EXPOSE 8080 8085 4320
+
+ENTRYPOINT ["/usr/local/bin/railway-signoz-entrypoint.sh"]
