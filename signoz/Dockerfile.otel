@@ -10,9 +10,7 @@ ENV OTEL_RESOURCE_ATTRIBUTES=host.name=signoz-host,os.type=linux \
 
 COPY ./otel-collector-config.yaml /etc/otel-collector-config.yaml
 COPY signoz/otel-collector-opamp-config.yaml /etc/manager-config.yaml
-COPY ./otel-entrypoint.sh /usr/local/bin/otel-entrypoint.sh
-
-RUN chmod +x /usr/local/bin/otel-entrypoint.sh
+COPY --chmod=755 ./otel-entrypoint.sh /usr/local/bin/otel-entrypoint.sh
 
 EXPOSE 4317 4318 13133
 
