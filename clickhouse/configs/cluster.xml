@@ -1,5 +1,10 @@
 <?xml version="1.0"?>
 <clickhouse>
+    <!-- Match cluster.xml's host entry so the DDLWorker claims queue entries
+         targeted at the "clickhouse" host. Without this, hostname -f returns
+         the random Railway pod ID and ON CLUSTER DDLs hang in the ZK queue. -->
+    <interserver_http_host>clickhouse</interserver_http_host>
+
     <!-- ZooKeeper is used to store metadata about replicas, when using Replicated tables.
          Optional. If you don't use replicated tables, you could omit that.
 
