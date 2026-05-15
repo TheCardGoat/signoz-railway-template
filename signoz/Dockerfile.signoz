@@ -12,8 +12,11 @@ RUN apk add --no-cache socat
 COPY signoz/prometheus.yml /root/config/prometheus.yml
 COPY dashboards /root/config/dashboards
 COPY ./railway-signoz-entrypoint.sh /usr/local/bin/railway-signoz-entrypoint.sh
+COPY ./signoz-command-wrapper.sh /usr/local/bin/signoz-command-wrapper.sh
 
-RUN chmod +x /usr/local/bin/railway-signoz-entrypoint.sh
+RUN chmod +x /usr/local/bin/railway-signoz-entrypoint.sh /usr/local/bin/signoz-command-wrapper.sh \
+    && mv /root/signoz /root/signoz-bin \
+    && ln -s /usr/local/bin/signoz-command-wrapper.sh /root/signoz
 
 EXPOSE 8080 8085 4320
 
