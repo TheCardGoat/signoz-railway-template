@@ -1,10 +1,5 @@
 <?xml version="1.0"?>
 <clickhouse>
-    <!-- Match cluster.xml's host entry so the DDLWorker claims queue entries
-         targeted at the "clickhouse" host. Without this, hostname -f returns
-         the random Railway pod ID and ON CLUSTER DDLs hang in the ZK queue. -->
-    <interserver_http_host>clickhouse</interserver_http_host>
-
     <!-- ZooKeeper is used to store metadata about replicas, when using Replicated tables.
          Optional. If you don't use replicated tables, you could omit that.
 
@@ -57,7 +52,11 @@
                 <!-- Optional. Shard weight when writing data. Default: 1. -->
                 <!-- <weight>1</weight> -->
                 <replica>
-                    <host>clickhouse</host>
+                    <!-- Single-node cluster: use loopback so the in-container DDLWorker
+                         resolves this host to its own listen address and claims ON CLUSTER
+                         queue entries. External clients reach ClickHouse via their own DSN
+                         (clickhouse.railway.internal:9000) and don't consult this file. -->
+                    <host>localhost</host>
                     <port>9000</port>
                     <!-- Optional. Priority of the replica for load_balancing. Default: 1 (less value has more priority). -->
                     <!-- <priority>1</priority> -->
