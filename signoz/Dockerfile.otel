@@ -12,6 +12,13 @@ COPY ./otel-collector-config.yaml /etc/otel-collector-config.yaml
 COPY signoz/otel-collector-opamp-config.yaml /etc/manager-config.yaml
 COPY --chmod=755 ./otel-entrypoint.sh /usr/local/bin/otel-entrypoint.sh
 
+# Railway service-level start commands can call /signoz-otel-collector directly.
+# Keep a shim at that path so stale feature gates are removed even then.
+USER 0
+RUN mv /signoz-otel-collector /usr/local/bin/signoz-otel-collector.real
+COPY --chmod=755 ./otel-command-shim.sh /signoz-otel-collector
+USER 10001
+
 EXPOSE 4317 4318 13133
 
 ENTRYPOINT ["/usr/local/bin/otel-entrypoint.sh"]
