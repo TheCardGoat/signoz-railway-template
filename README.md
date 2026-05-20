@@ -44,6 +44,51 @@ To run the SigNoz stack on Railway, ensure the following:
 - You may need to configure **Domains / Proxy** settings in Railway for the `signoz-otel-collector` service, depending on your use case.  
 - Port **4317** is open for ingestion by default.
 
+#### PostgreSQL and Redis Metrics
+
+The `signoz-otel-collector` image already includes the receivers required by the SigNoz PostgreSQL and Redis integrations, so database metrics can be collected by the existing collector service instead of deploying a second collector service.
+
+The opt-in combined config scrapes the production Postgres HA endpoint and the five production Redis services:
+
+- Postgres HA: `postgres-ha.railway.internal:5432`
+- Cyberpunk Redis: `redis-d7a4.railway.internal:6379`
+- Gateway Redis: `redis-20e3.railway.internal:6379`
+- Gundam Redis: `redis-6c5d.railway.internal:6379`
+- Lorcana Redis: `redis.railway.internal:6379`
+- Web Redis: `redis-daa5.railway.internal:6379`
+
+To enable this path, set these Railway variables on the `signoz-otel-collector` service:
+
+- `POSTGRESQL_PASSWORD`: monitoring user password. This is required and must match the production Postgres `monitoring` user.
+- `POSTGRESQL_ENDPOINT`: defaults to `postgres-ha.railway.internal:5432`.
+- `POSTGRESQL_USERNAME`: defaults to `monitoring`.
+- `POSTGRESQL_SERVICE_NAME`: defaults to `postgres-ha`.
+- `POSTGRESQL_COLLECTION_INTERVAL`: defaults to `60s`.
+- `POSTGRESQL_TLS_INSECURE`: defaults to `true`.
+- `DEPLOYMENT_ENVIRONMENT`: defaults to `production`.
+- `REDIS_CYBERPUNK_PASSWORD`: reference `cyberpunk/redis.REDIS_PASSWORD`.
+- `REDIS_GATEWAY_PASSWORD`: reference `gateway/redis.REDIS_PASSWORD`.
+- `REDIS_GUNDAM_PASSWORD`: reference `gundam/redis.REDIS_PASSWORD`.
+- `REDIS_LORCANA_PASSWORD`: reference `lorcana/redis.REDIS_PASSWORD`.
+- `REDIS_WEB_PASSWORD`: reference `web/redis.REDIS_PASSWORD`.
+- `REDIS_COLLECTION_INTERVAL`: defaults to `60s`.
+
+Then update the `signoz-otel-collector` start command to use the combined config:
+
+```sh
+/bin/sh -c "/signoz-otel-collector migrate sync check && exec /signoz-otel-collector --config=/etc/otel-collector-config-postgres.yaml --copy-path=/var/tmp/collector-config.yaml"
+```
+
+The combined config lives at `signoz/otel-collector-config-postgres.yaml` and keeps the normal SigNoz OTLP, Prometheus, traces, metrics, and logs pipelines while adding Postgres and Redis metrics pipelines. Do not pass `--manager-config` with this opt-in database metrics config: OpAMP can reload the default collector config and drop the database receivers. PostgreSQL and Redis log collection require the collector to read the database server log files, which is usually not available from separate Railway managed database services.
+
+Create the Postgres monitoring user once on the production cluster:
+
+```sql
+CREATE USER monitoring WITH PASSWORD '<generated-password>';
+GRANT pg_monitor TO monitoring;
+GRANT SELECT ON pg_stat_database TO monitoring;
+```
+
 #### SigNoz UI
 - A public domain is configured automatically in Railway to access the SigNoz dashboard.
 - SigNoz listens on port **8080** and Railway probes `/api/v1/health`. Keep the `signoz` service variable `PORT=8080` when possible. The Dockerfile also includes a small forwarder so deployments still answer Railway healthchecks if Railway injects a different `PORT`.
