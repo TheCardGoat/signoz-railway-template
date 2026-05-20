@@ -100,6 +100,61 @@ processors:
       - key: deployment.environment
         value: ${env:DEPLOYMENT_ENVIRONMENT}
         action: upsert
+  resource/redis/cyberpunk:
+    attributes:
+      - key: service.name
+        value: redis-cyberpunk
+        action: upsert
+      - key: service.instance.id
+        value: ${env:REDIS_CYBERPUNK_ENDPOINT}
+        action: upsert
+      - key: deployment.environment
+        value: ${env:DEPLOYMENT_ENVIRONMENT}
+        action: upsert
+  resource/redis/gateway:
+    attributes:
+      - key: service.name
+        value: redis-gateway
+        action: upsert
+      - key: service.instance.id
+        value: ${env:REDIS_GATEWAY_ENDPOINT}
+        action: upsert
+      - key: deployment.environment
+        value: ${env:DEPLOYMENT_ENVIRONMENT}
+        action: upsert
+  resource/redis/gundam:
+    attributes:
+      - key: service.name
+        value: redis-gundam
+        action: upsert
+      - key: service.instance.id
+        value: ${env:REDIS_GUNDAM_ENDPOINT}
+        action: upsert
+      - key: deployment.environment
+        value: ${env:DEPLOYMENT_ENVIRONMENT}
+        action: upsert
+  resource/redis/lorcana:
+    attributes:
+      - key: service.name
+        value: redis-lorcana
+        action: upsert
+      - key: service.instance.id
+        value: ${env:REDIS_LORCANA_ENDPOINT}
+        action: upsert
+      - key: deployment.environment
+        value: ${env:DEPLOYMENT_ENVIRONMENT}
+        action: upsert
+  resource/redis/web:
+    attributes:
+      - key: service.name
+        value: redis-web
+        action: upsert
+      - key: service.instance.id
+        value: ${env:REDIS_WEB_ENDPOINT}
+        action: upsert
+      - key: deployment.environment
+        value: ${env:DEPLOYMENT_ENVIRONMENT}
+        action: upsert
   resourcedetection:
     # Using OTEL_RESOURCE_ATTRIBUTES envvar, env detector adds custom labels.
     detectors: [env, system]
@@ -176,9 +231,25 @@ service:
       receivers: [postgresql]
       processors: [resource/postgresql, batch]
       exporters: [signozclickhousemetrics, metadataexporter, signozmeter]
-    metrics/redis:
-      receivers: [redis/cyberpunk, redis/gateway, redis/gundam, redis/lorcana, redis/web]
-      processors: [batch]
+    metrics/redis/cyberpunk:
+      receivers: [redis/cyberpunk]
+      processors: [resource/redis/cyberpunk, batch]
+      exporters: [signozclickhousemetrics, metadataexporter, signozmeter]
+    metrics/redis/gateway:
+      receivers: [redis/gateway]
+      processors: [resource/redis/gateway, batch]
+      exporters: [signozclickhousemetrics, metadataexporter, signozmeter]
+    metrics/redis/gundam:
+      receivers: [redis/gundam]
+      processors: [resource/redis/gundam, batch]
+      exporters: [signozclickhousemetrics, metadataexporter, signozmeter]
+    metrics/redis/lorcana:
+      receivers: [redis/lorcana]
+      processors: [resource/redis/lorcana, batch]
+      exporters: [signozclickhousemetrics, metadataexporter, signozmeter]
+    metrics/redis/web:
+      receivers: [redis/web]
+      processors: [resource/redis/web, batch]
       exporters: [signozclickhousemetrics, metadataexporter, signozmeter]
     metrics/prometheus:
       receivers: [prometheus]
