@@ -2,13 +2,26 @@ ARG OTELCOL_TAG=v0.144.4
 FROM signoz/signoz-otel-collector:${OTELCOL_TAG}
 
 ENV OTEL_RESOURCE_ATTRIBUTES=host.name=signoz-host,os.type=linux \
+    DEPLOYMENT_ENVIRONMENT=production \
     LOW_CARDINAL_EXCEPTION_GROUPING=false \
+    POSTGRESQL_COLLECTION_INTERVAL=60s \
+    POSTGRESQL_ENDPOINT=postgres-ha.railway.internal:5432 \
+    POSTGRESQL_SERVICE_NAME=postgres-ha \
+    POSTGRESQL_TLS_INSECURE=true \
+    POSTGRESQL_USERNAME=monitoring \
+    REDIS_COLLECTION_INTERVAL=60s \
+    REDIS_CYBERPUNK_ENDPOINT=redis-d7a4.railway.internal:6379 \
+    REDIS_GATEWAY_ENDPOINT=redis-20e3.railway.internal:6379 \
+    REDIS_GUNDAM_ENDPOINT=redis-6c5d.railway.internal:6379 \
+    REDIS_LORCANA_ENDPOINT=redis.railway.internal:6379 \
+    REDIS_WEB_ENDPOINT=redis-daa5.railway.internal:6379 \
     SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_DSN=tcp://clickhouse:9000 \
     SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_CLUSTER=cluster \
     SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_REPLICATION=true \
     SIGNOZ_OTEL_COLLECTOR_TIMEOUT=10m
 
 COPY ./otel-collector-config.yaml /etc/otel-collector-config.yaml
+COPY ./otel-collector-config-postgres.yaml /etc/otel-collector-config-postgres.yaml
 COPY signoz/otel-collector-opamp-config.yaml /etc/manager-config.yaml
 COPY --chmod=755 ./otel-entrypoint.sh /usr/local/bin/otel-entrypoint.sh
 
