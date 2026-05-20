@@ -183,8 +183,10 @@
     <!-- <listen_host>::</listen_host> -->
 
 
-    <!-- Same for hosts without support for IPv6: -->
-    <!-- <listen_host>0.0.0.0</listen_host> -->
+    <!-- Railway services reach ClickHouse through the private service IP, not
+         container loopback. Bind the native TCP and HTTP listeners to IPv4 so
+         SigNoz and the collector can connect to clickhouse:9000. -->
+    <listen_host>0.0.0.0</listen_host>
 
     <!-- Default values - try listen localhost on IPv4 and IPv6. -->
     <!--
