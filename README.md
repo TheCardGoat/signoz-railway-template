@@ -44,6 +44,52 @@ To run the SigNoz stack on Railway, ensure the following:
 - You may need to configure **Domains / Proxy** settings in Railway for the `signoz-otel-collector` service, depending on your use case.  
 - Port **4317** is open for ingestion by default.
 
+#### Railway Service Metrics
+
+SigNoz's Docker container metrics guide uses the OpenTelemetry `docker_stats`
+receiver, which requires the collector to read the host Docker API through
+`/var/run/docker.sock`. Railway services do not expose the host Docker socket
+to deployed containers, so this template collects Railway platform metrics via
+a Prometheus scrape target instead.
+
+Deploy a Railway Prometheus exporter service in the same project as SigNoz, then
+point the collector at it:
+
+- Exporter service name: `railway-prometheus-exporter`
+- Exporter variables:
+  - `RAILWAY_API_KEY`: Railway account or project token with access to the
+    target project.
+  - `ENVIRONMENT_TARGETS`: comma-separated `projectId:environmentId` pairs, for
+    example `de8a1008-6ad7-4ff3-aab4-67aced62a287:c77276d2-ed61-4b77-9121-b070577a9dee`.
+- Collector variables:
+  - `RAILWAY_PROMETHEUS_EXPORTER_TARGET`: defaults to
+    `railway-prometheus-exporter.railway.internal:9090`.
+  - `RAILWAY_PROMETHEUS_EXPORTER_SCRAPE_INTERVAL`: defaults to `60s`.
+
+Then update the `signoz-otel-collector` start command to load the Railway
+metrics overlay alongside the normal production config:
+
+```sh
+/bin/sh -c "/signoz-otel-collector migrate sync check && exec /signoz-otel-collector --config=/etc/otel-collector-config-postgres.yaml --config=/etc/otel-collector-config-railway.yaml --copy-path=/var/tmp/collector-config.yaml"
+```
+
+The overlay in `signoz/otel-collector-config-railway.yaml` adds a
+`metrics/railway` pipeline and reuses the base SigNoz ClickHouse metrics,
+metadata, and meter exporters.
+
+Application images should still export their own OTLP signals directly to the
+collector over HTTP:
+
+```env
+OTEL_EXPORTER_OTLP_ENDPOINT=http://signoz-otel-collector.railway.internal:4318
+OTLP_ENDPOINT=${{ OTEL_EXPORTER_OTLP_ENDPOINT }}
+DEPLOYMENT_ENVIRONMENT=${{ RAILWAY_ENVIRONMENT_NAME }}
+DEPLOYMENT_ENV=${{ RAILWAY_ENVIRONMENT_NAME }}
+GIT_SHA=${{ RAILWAY_GIT_COMMIT_SHA }}
+SERVICE_VERSION=${{ RAILWAY_GIT_COMMIT_SHA }}
+POD_NAME=${{ RAILWAY_REPLICA_ID }}
+```
+
 #### PostgreSQL and Redis Metrics
 
 The `signoz-otel-collector` image already includes the receivers required by the SigNoz PostgreSQL and Redis integrations, so database metrics can be collected by the existing collector service instead of deploying a second collector service.

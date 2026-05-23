@@ -1,0 +1,20 @@
+receivers:
+  prometheus/railway:
+    config:
+      global:
+        scrape_interval: ${env:RAILWAY_PROMETHEUS_EXPORTER_SCRAPE_INTERVAL:-60s}
+      scrape_configs:
+        - job_name: railway-prometheus-exporter
+          static_configs:
+            - targets:
+                - ${env:RAILWAY_PROMETHEUS_EXPORTER_TARGET:-railway-prometheus-exporter.railway.internal:9090}
+              labels:
+                job_name: railway-prometheus-exporter
+                deployment_environment: ${env:DEPLOYMENT_ENVIRONMENT:-production}
+
+service:
+  pipelines:
+    metrics/railway:
+      receivers: [prometheus/railway]
+      processors: [batch]
+      exporters: [signozclickhousemetrics, metadataexporter, signozmeter]

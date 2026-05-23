@@ -22,6 +22,7 @@ ENV OTEL_RESOURCE_ATTRIBUTES=host.name=signoz-host,os.type=linux \
 
 COPY ./otel-collector-config.yaml /etc/otel-collector-config.yaml
 COPY ./otel-collector-config-postgres.yaml /etc/otel-collector-config-postgres.yaml
+COPY ./otel-collector-config-railway.yaml /etc/otel-collector-config-railway.yaml
 COPY signoz/otel-collector-opamp-config.yaml /etc/manager-config.yaml
 COPY --chmod=755 ./otel-entrypoint.sh /usr/local/bin/otel-entrypoint.sh
 
