@@ -747,15 +747,7 @@
                 toStartOfHour(event_time)
         -->
         <partition_by>toYYYYMM(event_date)</partition_by>
-        <!--
-            Table TTL specification: https://clickhouse.com/docs/en/engines/table-engines/mergetree-family/mergetree/#mergetree-table-ttl
-            Example:
-                event_date + INTERVAL 1 WEEK
-                event_date + INTERVAL 7 DAY DELETE
-                event_date + INTERVAL 2 WEEK TO DISK 'bbb'
-
-        <ttl>event_date + INTERVAL 30 DAY DELETE</ttl>
-        -->
+        <ttl>event_date + INTERVAL 3 DAY DELETE</ttl>
 
         <!-- Instead of partition_by, you can provide full engine expression (starting with ENGINE = ) with parameters,
              Example: <engine>ENGINE = MergeTree PARTITION BY toYYYYMM(event_date) ORDER BY (event_date, event_time) SETTINGS index_granularity = 1024</engine>
@@ -772,6 +764,7 @@
         <table>trace_log</table>
 
         <partition_by>toYYYYMM(event_date)</partition_by>
+        <ttl>event_date + INTERVAL 3 DAY DELETE</ttl>
         <flush_interval_milliseconds>7500</flush_interval_milliseconds>
     </trace_log>
 
@@ -790,6 +783,7 @@
         <database>system</database>
         <table>query_views_log</table>
         <partition_by>toYYYYMM(event_date)</partition_by>
+        <ttl>event_date + INTERVAL 3 DAY DELETE</ttl>
         <flush_interval_milliseconds>7500</flush_interval_milliseconds>
     </query_views_log>
 
@@ -799,6 +793,7 @@
         <database>system</database>
         <table>part_log</table>
         <partition_by>toYYYYMM(event_date)</partition_by>
+        <ttl>event_date + INTERVAL 3 DAY DELETE</ttl>
         <flush_interval_milliseconds>7500</flush_interval_milliseconds>
     </part_log>
 
@@ -817,6 +812,7 @@
     <metric_log>
         <database>system</database>
         <table>metric_log</table>
+        <ttl>event_date + INTERVAL 3 DAY DELETE</ttl>
         <flush_interval_milliseconds>7500</flush_interval_milliseconds>
         <collect_interval_milliseconds>1000</collect_interval_milliseconds>
     </metric_log>
@@ -832,6 +828,7 @@
             Asynchronous metrics are updated once a minute, so there is
             no need to flush more often.
         -->
+        <ttl>event_date + INTERVAL 3 DAY DELETE</ttl>
         <flush_interval_milliseconds>7000</flush_interval_milliseconds>
     </asynchronous_metric_log>
 
@@ -888,6 +885,7 @@
         <table>processors_profile_log</table>
 
         <partition_by>toYYYYMM(event_date)</partition_by>
+        <ttl>event_date + INTERVAL 3 DAY DELETE</ttl>
         <flush_interval_milliseconds>7500</flush_interval_milliseconds>
     </processors_profile_log>
 
