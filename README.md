@@ -40,6 +40,15 @@ To run the SigNoz stack on Railway, ensure the following:
 - `signoz-telemetrystore-migrator`: `signoz/Dockerfile.migrator`
 - `clickhouse`: `clickhouse/Dockerfile.clickhouse`
 
+#### Railway Service Config
+- `signoz`: `signoz/railway.toml`
+- `signoz-otel-collector`: `signoz/otel-collector.railway.toml`
+- `clickhouse`: `clickhouse/railway.toml`
+
+The image-only services (`zookeeper` and the schema migrators) are not backed by
+this repository's Dockerfiles. Keep their live Railway settings managed in
+Railway until they have their own config-as-code files.
+
 #### OpenTelemetry Ingestion
 - You may need to configure **Domains / Proxy** settings in Railway for the `signoz-otel-collector` service, depending on your use case.  
 - Port **4317** is open for ingestion by default.
@@ -139,6 +148,10 @@ GRANT SELECT ON pg_stat_database TO monitoring;
 - A public domain is configured automatically in Railway to access the SigNoz dashboard.
 - SigNoz listens on port **8080** and Railway probes `/api/v1/health`. Keep the `signoz` service variable `PORT=8080` when possible. The Dockerfile also includes a small forwarder so deployments still answer Railway healthchecks if Railway injects a different `PORT`.
 - Set `SIGNOZ_TOKENIZER_JWT_SECRET` on the `signoz` service with a generated secret, for example `${{ secret(32) }}` in the Railway template editor.
+- SigNoz data retention is configured in the SigNoz app under Settings >
+  General. The service config keeps the UI sleep-on-idle setting in code, but
+  retention periods are stored by SigNoz and are not represented in these
+  Railway service manifests.
 
 #### Schema-Migration Order
 ClickHouse migrations run in the dedicated **`signoz-telemetrystore-migrator`** job. This template builds that job from `signoz/Dockerfile.migrator`, which uses the current SigNoz otel-collector migration command:
