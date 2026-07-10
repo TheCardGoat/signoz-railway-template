@@ -281,10 +281,10 @@
     <http_server_default_response><![CDATA[<html ng-app="SMI2"><head><base href="http://ui.tabix.io/"></head><body><div ui-view="" class="content-ui"></div><script src="http://loader.tabix.io/master.js"></script></body></html>]]></http_server_default_response>
     -->
 
-    <!-- Maximum number of concurrent queries. -->
-    <!-- Distributed SigNoz tables route through the local shard, so each
-         operation consumes both an initiator and shard-side query slot. -->
-    <max_concurrent_queries>256</max_concurrent_queries>
+    <!-- Maximum number of concurrent queries. Distributed SigNoz tables route
+         through the local shard, so each operation consumes both an initiator
+         and shard-side query slot. -->
+    <max_concurrent_queries>512</max_concurrent_queries>
 
     <!-- Maximum memory usage (resident set size) for server process.
          Zero value or unset means default. Default is "max_server_memory_usage_to_ram_ratio" of available physical RAM.
