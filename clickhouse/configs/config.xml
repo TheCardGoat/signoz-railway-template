@@ -9,7 +9,6 @@
     <!-- Railway limits each container to 1000 PIDs. Keep ClickHouse's global
          and background pools comfortably below that ceiling so operational
          commands and health checks can always start. -->
-    <max_thread_pool_size>512</max_thread_pool_size>
     <max_thread_pool_free_size>100</max_thread_pool_free_size>
     <thread_pool_queue_size>1000</thread_pool_queue_size>
     <background_schedule_pool_size>128</background_schedule_pool_size>
@@ -307,7 +306,8 @@
     of the time, in which case a higher number of threads might be required.
     -->
 
-    <max_thread_pool_size>10000</max_thread_pool_size>
+    <!-- Keep the global pool below Railway's 1000-PID container limit. -->
+    <max_thread_pool_size>512</max_thread_pool_size>
 
     <!-- Number of workers to recycle connections in background (see also drain_timeout).
          If the pool is full, connection will be drained synchronously. -->
@@ -847,7 +847,6 @@
             Asynchronous metrics are updated once a minute, so there is
             no need to flush more often.
         -->
-        <ttl>event_date + INTERVAL 3 DAY DELETE</ttl>
         <flush_interval_milliseconds>7000</flush_interval_milliseconds>
     </asynchronous_metric_log>
 
