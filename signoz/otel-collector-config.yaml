@@ -4,7 +4,6 @@ connectors:
     dimensions:
       - name: service.name
       - name: deployment.environment
-      - name: host.name
 receivers:
   otlp:
     protocols:
@@ -58,9 +57,7 @@ processors:
       - name: k8s.cluster.name
       - name: k8s.node.name
       - name: k8s.namespace.name
-      - name: host.name
       - name: host.type
-      - name: container.name
 extensions:
   health_check:
     endpoint: 0.0.0.0:13133

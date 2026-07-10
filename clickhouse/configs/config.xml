@@ -6,6 +6,12 @@
    or add <skip_check_for_incorrect_settings>1</skip_check_for_incorrect_settings> here.
 -->
 <clickhouse>
+    <!-- Railway limits each container to 1000 PIDs. Keep ClickHouse's global
+         and background pools comfortably below that ceiling so operational
+         commands and health checks can always start. -->
+    <max_thread_pool_free_size>100</max_thread_pool_free_size>
+    <thread_pool_queue_size>1000</thread_pool_queue_size>
+    <background_schedule_pool_size>128</background_schedule_pool_size>
     <logger>
         <!-- Possible levels [1]:
 
@@ -276,7 +282,9 @@
     -->
 
     <!-- Maximum number of concurrent queries. -->
-    <max_concurrent_queries>100</max_concurrent_queries>
+    <!-- Distributed SigNoz tables route through the local shard, so each
+         operation consumes both an initiator and shard-side query slot. -->
+    <max_concurrent_queries>256</max_concurrent_queries>
 
     <!-- Maximum memory usage (resident set size) for server process.
          Zero value or unset means default. Default is "max_server_memory_usage_to_ram_ratio" of available physical RAM.
@@ -298,7 +306,8 @@
     of the time, in which case a higher number of threads might be required.
     -->
 
-    <max_thread_pool_size>10000</max_thread_pool_size>
+    <!-- Keep the global pool below Railway's 1000-PID container limit. -->
+    <max_thread_pool_size>512</max_thread_pool_size>
 
     <!-- Number of workers to recycle connections in background (see also drain_timeout).
          If the pool is full, connection will be drained synchronously. -->
@@ -747,8 +756,16 @@
                 toStartOfHour(event_time)
         -->
         <partition_by>toYYYYMM(event_date)</partition_by>
-        <ttl>event_date + INTERVAL 3 DAY DELETE</ttl>
+        <ttl>event_date + INTERVAL 1 DAY DELETE</ttl>
+        <!--
+            Table TTL specification: https://clickhouse.com/docs/en/engines/table-engines/mergetree-family/mergetree/#mergetree-table-ttl
+            Example:
+                event_date + INTERVAL 1 WEEK
+                event_date + INTERVAL 7 DAY DELETE
+                event_date + INTERVAL 2 WEEK TO DISK 'bbb'
 
+        <ttl>event_date + INTERVAL 30 DAY DELETE</ttl>
+        -->
         <!-- Instead of partition_by, you can provide full engine expression (starting with ENGINE = ) with parameters,
              Example: <engine>ENGINE = MergeTree PARTITION BY toYYYYMM(event_date) ORDER BY (event_date, event_time) SETTINGS index_granularity = 1024</engine>
           -->
@@ -764,7 +781,7 @@
         <table>trace_log</table>
 
         <partition_by>toYYYYMM(event_date)</partition_by>
-        <ttl>event_date + INTERVAL 3 DAY DELETE</ttl>
+        <ttl>event_date + INTERVAL 1 DAY DELETE</ttl>
         <flush_interval_milliseconds>7500</flush_interval_milliseconds>
     </trace_log>
 
@@ -774,6 +791,7 @@
         <database>system</database>
         <table>query_thread_log</table>
         <partition_by>toYYYYMM(event_date)</partition_by>
+        <ttl>event_date + INTERVAL 1 DAY DELETE</ttl>
         <flush_interval_milliseconds>7500</flush_interval_milliseconds>
     </query_thread_log>
 
@@ -783,7 +801,7 @@
         <database>system</database>
         <table>query_views_log</table>
         <partition_by>toYYYYMM(event_date)</partition_by>
-        <ttl>event_date + INTERVAL 3 DAY DELETE</ttl>
+        <ttl>event_date + INTERVAL 1 DAY DELETE</ttl>
         <flush_interval_milliseconds>7500</flush_interval_milliseconds>
     </query_views_log>
 
@@ -793,7 +811,7 @@
         <database>system</database>
         <table>part_log</table>
         <partition_by>toYYYYMM(event_date)</partition_by>
-        <ttl>event_date + INTERVAL 3 DAY DELETE</ttl>
+        <ttl>event_date + INTERVAL 1 DAY DELETE</ttl>
         <flush_interval_milliseconds>7500</flush_interval_milliseconds>
     </part_log>
 
@@ -812,7 +830,7 @@
     <metric_log>
         <database>system</database>
         <table>metric_log</table>
-        <ttl>event_date + INTERVAL 3 DAY DELETE</ttl>
+        <ttl>event_date + INTERVAL 1 DAY DELETE</ttl>
         <flush_interval_milliseconds>7500</flush_interval_milliseconds>
         <collect_interval_milliseconds>1000</collect_interval_milliseconds>
     </metric_log>
@@ -824,11 +842,11 @@
     <asynchronous_metric_log>
         <database>system</database>
         <table>asynchronous_metric_log</table>
+        <ttl>event_date + INTERVAL 1 DAY DELETE</ttl>
         <!--
             Asynchronous metrics are updated once a minute, so there is
             no need to flush more often.
         -->
-        <ttl>event_date + INTERVAL 3 DAY DELETE</ttl>
         <flush_interval_milliseconds>7000</flush_interval_milliseconds>
     </asynchronous_metric_log>
 
@@ -885,7 +903,7 @@
         <table>processors_profile_log</table>
 
         <partition_by>toYYYYMM(event_date)</partition_by>
-        <ttl>event_date + INTERVAL 3 DAY DELETE</ttl>
+        <ttl>event_date + INTERVAL 1 DAY DELETE</ttl>
         <flush_interval_milliseconds>7500</flush_interval_milliseconds>
     </processors_profile_log>
 

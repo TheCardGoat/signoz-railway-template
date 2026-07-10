@@ -1,4 +1,4 @@
-ARG OTELCOL_TAG=v0.144.4
+ARG OTELCOL_TAG=v0.144.5
 FROM signoz/signoz-otel-collector:${OTELCOL_TAG}
 
 ENV OTEL_RESOURCE_ATTRIBUTES=host.name=signoz-host,os.type=linux \

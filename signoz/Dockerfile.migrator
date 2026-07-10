@@ -1,4 +1,4 @@
-ARG OTELCOL_TAG=v0.144.4
+ARG OTELCOL_TAG=v0.144.5
 FROM signoz/signoz-otel-collector:${OTELCOL_TAG}
 
 ENV SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_DSN=tcp://clickhouse:9000 \
@@ -6,5 +6,18 @@ ENV SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_DSN=tcp://clickhouse:9000 \
     SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_REPLICATION=true \
     SIGNOZ_OTEL_COLLECTOR_TIMEOUT=10m
 
-ENTRYPOINT ["/bin/sh", "-c"]
-CMD ["/signoz-otel-collector migrate bootstrap && /signoz-otel-collector migrate sync up && /signoz-otel-collector migrate async up"]
+# The existing Railway service still invokes ./signoz-schema-migrator after a
+# startup delay. Keep that path as a compatibility entrypoint, but always run
+# the complete migration sequence supported by current collector images.
+USER 0
+RUN printf '%s\n' \
+      '#!/bin/sh' \
+      'set -eu' \
+      '/signoz-otel-collector migrate bootstrap' \
+      '/signoz-otel-collector migrate sync up' \
+      'exec /signoz-otel-collector migrate async up' \
+      > /signoz-schema-migrator \
+    && chmod 755 /signoz-schema-migrator
+USER 10001
+
+ENTRYPOINT ["/signoz-schema-migrator"]
