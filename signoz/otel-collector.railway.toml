@@ -13,4 +13,3 @@ sleepApplication = false
 
 [deploy.multiRegionConfig.us-east4-eqdc4a]
 numReplicas = 1
-
